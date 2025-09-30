@@ -1,0 +1,43 @@
+#define TRIGGER_PIN 9
+#define ECHO_PIN 8
+
+const int TRIGGER_DISTANCE_CM = 20;
+
+int objectCount = 0;
+bool objectDetected = false;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(TRIGGER_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+}
+
+void loop() {
+  long duration, distance;
+  digitalWrite(TRIGGER_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIGGER_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIGGER_PIN, LOW);
+  duration = pulseIn(ECHO_PIN, HIGH);
+  distance = (duration / 2) / 29.1;
+
+  if (distance < TRIGGER_DISTANCE_CM && distance > 0) {
+    if (!objectDetected) {
+      Serial.println("Object Detected & Present");
+      objectDetected = true;
+    }
+  } else {
+    if (objectDetected) {
+      objectCount++;
+      Serial.println("Detected Object Is Gone");
+      Serial.print(objectCount);
+      Serial.println(" Objects Detected");
+      objectDetected = false;
+    } else {
+      Serial.println("Waiting To Detect An Object");
+    }
+  }
+
+  delay(250);
+}
