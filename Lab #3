@@ -1,0 +1,71 @@
+const int trigPin = 9;
+const int echoPin = 10;
+
+long duration;
+float distance;
+
+const float DETECTION_THRESHOLD = 5.0;
+
+float baselineDistance;
+
+bool objectPresent = false;
+
+void setup() {
+  Serial.begin(9600);
+  
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  Serial.println("Calibrating sensor. Please keep the area clear.");
+  delay(2000);
+
+  float totalDistance = 0;
+  int readings = 10;
+  for (int i = 0; i < readings; i++) {
+    totalDistance += getDistance();
+    delay(50);
+  }
+  baselineDistance = totalDistance / readings;
+  
+  Serial.print("Calibration complete. Baseline distance: ");
+  Serial.print(baselineDistance);
+  Serial.println(" cm");
+  Serial.println("Ready to detect objects.");
+}
+
+void loop() {
+  distance = getDistance();
+
+  if (!objectPresent) {
+    Serial.println("Waiting To Detect An Object");
+    if (distance < baselineDistance - DETECTION_THRESHOLD) {
+      Serial.println("Object Detected & Present");
+      objectPresent = true;
+    }
+  } else {
+    if (distance >= baselineDistance - DETECTION_THRESHOLD) {
+      Serial.println("Detected Object Is Gone");
+      objectPresent = false;
+    }
+  }
+
+  delay(100); 
+}
+
+float getDistance() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  
+  duration = pulseIn(echoPin, HIGH);
+  
+  distance = duration * 0.0343 / 2;
+  
+  if (duration == 0) {
+    return 9999;
+  }
+  
+  return distance;
+}
