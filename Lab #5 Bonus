@@ -1,0 +1,65 @@
+const int trigPinLeft = 9;
+const int echoPinLeft = 10;
+const int trigPinRight = 11;
+const int echoPinRight = 12;
+
+const int detectionThreshold = 20;
+const int detectionWindowMs = 300;
+
+int objectCount = 0;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(trigPinLeft, OUTPUT);
+  pinMode(echoPinLeft, INPUT);
+  pinMode(trigPinRight, OUTPUT);
+  pinMode(echoPinRight, INPUT);
+}
+
+long getDistance(int trigPin, int echoPin) {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  long duration = pulseIn(echoPin, HIGH);
+  return duration * 0.034 / 2;
+}
+
+void loop() {
+  long distLeft = getDistance(trigPinLeft, echoPinLeft);
+  long distRight = getDistance(trigPinRight, echoPinRight);
+
+  bool leftDetected = (distLeft < detectionThreshold);
+  bool rightDetected = (distRight < detectionThreshold);
+
+  if (leftDetected && !rightDetected) {
+    unsigned long startTime = millis();
+    while (millis() - startTime < detectionWindowMs) {
+      if (getDistance(trigPinRight, echoPinRight) < detectionThreshold) {
+        Serial.println("Ball came from LEFT → RIGHT");
+        objectCount++;
+        Serial.print("Total balls detected: ");
+        Serial.println(objectCount);
+        delay(500);
+        return;
+      }
+    }
+  }
+
+  if (rightDetected && !leftDetected) {
+    unsigned long startTime = millis();
+    while (millis() - startTime < detectionWindowMs) {
+      if (getDistance(trigPinLeft, echoPinLeft) < detectionThreshold) {
+        Serial.println("Ball came from RIGHT → LEFT");
+        objectCount++;
+        Serial.print("Total balls detected: ");
+        Serial.println(objectCount);
+        delay(500);
+        return;
+      }
+    }
+  }
+
+  delay(6);
+}
